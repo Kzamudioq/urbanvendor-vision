@@ -21,6 +21,7 @@ Caso de estudio: sector de **La Mariposa**, centro de Bogotá. Vuelo con DJI Mav
 - La mitad de los puestos ocupa **22 hexágonos**, que suman **1 ha + 2860 m²**. En el más denso hay **28 puestos** en 585 m².
 - **710 es un conteo conservador.** v2 casi no marca nada que no sea una sombrilla, pero en la ortofoto se le escapan algunas pequeñas o deformadas por el mosaico (ver *Qué tan bueno es el modelo*).
 - La capa está en [`resultados/puestos_la_mariposa_v2.geojson`](resultados/puestos_la_mariposa_v2.geojson) (EPSG:3116). Cada polígono trae su confianza, área y diámetro. La densidad por hexágono está en [`resultados/densidad_la_mariposa_v2.geojson`](resultados/densidad_la_mariposa_v2.geojson).
+- Un punto por puesto, con coordenadas planas, latitud y longitud y un enlace a Google Maps: [`resultados/centroides_la_mariposa_v2.csv`](resultados/centroides_la_mariposa_v2.csv). Se abre en Excel o como capa de puntos en QGIS.
 
 <p align="center"><img src="docs/img/densidad.png" width="560" alt="Mapa de hexágonos sobre el ortomosaico, con escala y norte: la mayor densidad está alrededor del Parque La Mariposa y en las calles que salen de él"></p>
 
@@ -69,6 +70,9 @@ python -m urbanvendor ortofoto --raster la_mariposa.tif --pesos best.pt --imgsz 
 # densidad en hexágonos de 15 m de lado
 python -m urbanvendor densidad --puestos puestos.geojson --lado 15
 
+# un punto por puesto: coordenadas planas + lat/lon + enlace a Google Maps (CSV y GeoJSON)
+python -m urbanvendor centroides --puestos puestos.geojson --salida centroides
+
 # dataset v2 desde Labelme: teselas nativas y pliegues por zona sin fugas
 python -m urbanvendor dataset --fotos etiquetas/ --salida ds/ --lado 1024
 
@@ -104,7 +108,7 @@ scripts/entrenar_v2.py              lo mismo, en un computador local con GPU
 scripts/figuras.py                  antes/después y escala, desde la ortofoto y los GeoJSON
 scripts/mapa_densidad.py            mapa de densidad sobre el ortomosaico (lo regenera GitHub Actions)
 docs/base/la_mariposa_35cm.tif      copia liviana del ortomosaico (35 cm/píxel) para el mapa
-tests/                              11 pruebas sobre una ortofoto sintética y casos de borde
+tests/                              12 pruebas sobre una ortofoto sintética y casos de borde
 ```
 
 ## Datos
