@@ -35,8 +35,15 @@ def main():
     ax.set_xlim(xmin - m, xmax + m)
     ax.set_ylim(ymin - m, ymax + m)
     cmap = LinearSegmentedColormap.from_list("naranja", NARANJA)
-    hx.plot(ax=ax, column="puestos", cmap=cmap, alpha=0.82, edgecolor="none", linewidth=0, zorder=2,
-            legend=True, legend_kwds={"label": "puestos por hexágono de 585 m²", "shrink": 0.5})
+    # Opacidad creciente con la densidad: lo poco denso deja ver la calle, los focos quedan sólidos
+    vmax = float(hx["puestos"].max())
+    norm = plt.Normalize(vmin=1, vmax=vmax)
+    t = norm(hx["puestos"].to_numpy())
+    colores = cmap(t)
+    colores[:, 3] = 0.30 + 0.55 * np.sqrt(t)
+    hx.plot(ax=ax, color=colores, edgecolor="none", linewidth=0, zorder=2)
+    sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+    fig.colorbar(sm, ax=ax, shrink=0.5, label="puestos por hexágono de 585 m²")
     img, ext = cx.bounds2img(xmin - m, ymin - m, xmax + m, ymax + m, zoom=18,
                              source=cx.providers.Esri.WorldStreetMap)
     rgb = img[..., :3].astype(float)
