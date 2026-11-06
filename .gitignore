@@ -1,0 +1,10 @@
+__pycache__/
+*.egg-info/
+.pytest_cache/
+# Pesos de los modelos: no se publican
+*.pt
+*.onnx
+runs/
+datos/
+*.tif
+*.ecw
