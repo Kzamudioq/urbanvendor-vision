@@ -1,7 +1,7 @@
 """Figuras del README a partir de la ortofoto y los GeoJSON (no necesita los pesos).
 
 python scripts/figuras.py --orto la_mariposa.png --v1 puestos_v1.geojson --v2 puestos_v2.geojson \
-       --densidad densidad_v2.geojson --salida docs/img
+       --salida docs/img  (el mapa de densidad lo hace scripts/mapa_densidad.py)
 """
 from __future__ import annotations
 
@@ -84,33 +84,11 @@ def escala(src, v2, salida, gsd_raster, gsd_modelo, lienzo=400):
     plt.close(fig)
 
 
-def mapa_densidad(src, hexes, salida, red=14):
-    w, h = src.width // red, src.height // red
-    base = leer(src, 0, 0, src.width, src.height, out=(h, w)).astype(float)
-    gris = base.mean(-1, keepdims=True)
-    base = (0.35 * base + 0.65 * gris) * 0.9 + 25
-    alfa = src.read(4, out_shape=(h, w), resampling=Resampling.nearest) if src.count >= 4 else np.full((h, w), 255)
-    base[alfa == 0] = 255
-    b = src.bounds
-    fig, ax = plt.subplots(figsize=(7.2, 8.4))
-    ax.imshow(base.clip(0, 255).astype(np.uint8), extent=(b.left, b.right, b.bottom, b.top))
-    cmap = LinearSegmentedColormap.from_list("naranja", ["#fde3d3", "#f6a173", NARANJA, "#b8401a", "#6e2208"])
-    hx = hexes[hexes["puestos"] > 0]
-    hx.plot(ax=ax, column="puestos", cmap=cmap, alpha=0.85, edgecolor="none", linewidth=0,
-            legend=True, legend_kwds={"label": "puestos por hexágono de 585 m²", "shrink": 0.55})
-    ax.set_axis_off()
-    ax.set_title("Dónde se concentran los puestos · La Mariposa", loc="left", fontsize=13,
-                 fontweight="bold", color=TINTA)
-    fig.savefig(salida, dpi=150, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--orto", required=True)
     ap.add_argument("--v1", required=True)
     ap.add_argument("--v2", required=True)
-    ap.add_argument("--densidad", required=True)
     ap.add_argument("--salida", default="docs/img")
     ap.add_argument("--recorte", type=int, nargs=3, default=[5230, 14168, 1200], help="col fila lado")
     ap.add_argument("--gsd-modelo", type=float, default=0.1065)
@@ -121,7 +99,6 @@ def main():
         v1, v2 = gpd.read_file(a.v1).to_crs(src.crs), gpd.read_file(a.v2).to_crs(src.crs)
         antes_despues(src, v1, v2, *a.recorte, out / "antes_despues.jpg")
         escala(src, v2, out / "escala.png", abs(src.res[0]), a.gsd_modelo)
-        mapa_densidad(src, gpd.read_file(a.densidad).to_crs(src.crs), out / "densidad.png")
 
 
 if __name__ == "__main__":
