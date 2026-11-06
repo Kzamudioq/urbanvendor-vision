@@ -9,6 +9,8 @@ Caso de estudio: sector de **La Mariposa**, centro de Bogotá. Vuelo con DJI Mav
 
 <p align="center"><img src="docs/img/antes_despues.jpg" width="900" alt="Misma calle de la ortofoto: a la izquierda las detecciones de la versión 1 sobre objetos pequeños; a la derecha las de la versión 2 sobre cada sombrilla"></p>
 
+<p align="center"><sub>Una misma calle de La Mariposa. A la izquierda, la versión 1: contornos amarillos sobre objetos de medio metro (mercancía, cabezas, tapas) mientras las sombrillas quedan sin marcar. A la derecha, la versión 2: un contorno rojo por cada sombrilla.</sub></p>
+
 ## Resultados en La Mariposa
 
 | | v1 | v1 con escala corregida | **v2** |
@@ -23,11 +25,27 @@ Caso de estudio: sector de **La Mariposa**, centro de Bogotá. Vuelo con DJI Mav
 - La capa está en [`resultados/puestos_la_mariposa_v2.geojson`](resultados/puestos_la_mariposa_v2.geojson) (EPSG:3116). Cada polígono trae su confianza, área y diámetro. La densidad por hexágono está en [`resultados/densidad_la_mariposa_v2.geojson`](resultados/densidad_la_mariposa_v2.geojson).
 - Un punto por puesto, con coordenadas planas, latitud y longitud y un enlace a Google Maps: [`resultados/centroides_la_mariposa_v2.csv`](resultados/centroides_la_mariposa_v2.csv). Se abre en Excel o como capa de puntos en QGIS.
 
-<p align="center"><img src="docs/img/segmentacion.png" width="560" alt="Máscaras de segmentación de las 710 sombrillas sobre el ortomosaico, con un recuadro de detalle de 60 × 60 m junto al Parque La Mariposa"></p>
+### Tres mapas, del detalle al patrón
 
-<p align="center"><img src="docs/img/puestos.png" width="560" alt="Mapa de puntos sobre el ortomosaico, con escala y norte: cada puesto es un círculo naranja cuyo tamaño depende del diámetro de la sombrilla"></p>
+Los tres mapas tienen el mismo marco: el ortomosaico del vuelo sobre un mapa de calles en gris, con una grilla de coordenadas planas cada 100 m, escala gráfica y norte. Cada uno responde una pregunta distinta.
 
-<p align="center"><img src="docs/img/densidad.png" width="560" alt="Mapa de hexágonos sobre el ortomosaico, con escala y norte: la mayor densidad está alrededor del Parque La Mariposa y en las calles que salen de él"></p>
+**1. Segmentación: ¿qué encontró el modelo?**
+
+<p align="center"><img src="docs/img/segmentacion.png" width="620" alt="Máscaras de segmentación de las 710 sombrillas sobre el ortomosaico, con un recuadro de detalle de 60 × 60 m junto al Parque La Mariposa"></p>
+
+Cada mancha naranja es la máscara de una sombrilla: el contorno que el modelo YOLO26-seg dibujó sobre la imagen, no un punto ni una caja. A la escala de todo el sector las máscaras se ven pequeñas, porque una sombrilla de 2 m es un detalle dentro de 600 m de ortomosaico. Por eso el recuadro de arriba a la izquierda amplía 60 × 60 m junto al Parque La Mariposa, a 5 cm por píxel. Ahí se ve que cada máscara coincide con el borde de su sombrilla, y que las personas, los toldos sin sombrilla y la mercancía en el piso no se marcan. Las líneas unen el recuadro con su ubicación en el mapa general.
+
+**2. Puestos: ¿dónde está cada uno?**
+
+<p align="center"><img src="docs/img/puestos.png" width="620" alt="Mapa de puntos sobre el ortomosaico, con escala y norte: cada puesto es un círculo naranja cuyo tamaño depende del diámetro de la sombrilla"></p>
+
+Cada máscara se reduce a su centroide, y cada puesto queda como un nodo con coordenadas, las mismas de [`centroides_la_mariposa_v2.csv`](resultados/centroides_la_mariposa_v2.csv). El tamaño del nodo depende del diámetro medido de la sombrilla, entre 1,2 y 2,9 m. Se lee la forma de la ocupación: los puestos no están repartidos al azar, sino en hileras a lo largo de los andenes, alrededor del parque y en las calles que salen de la plaza hacia el sur y el occidente. Las vías vehiculares y el interior de las manzanas quedan vacíos.
+
+**3. Densidad: ¿dónde se concentran?**
+
+<p align="center"><img src="docs/img/densidad.png" width="620" alt="Mapa de hexágonos sobre el ortomosaico, con escala y norte: la mayor densidad está alrededor del Parque La Mariposa y en las calles que salen de él"></p>
+
+Los puestos se cuentan en hexágonos de 15 m de lado (585 m² cada uno). El color va de durazno claro (1 puesto) a café oscuro (28 puestos), y la opacidad también crece con el conteo: donde hay pocos puestos se sigue viendo el terreno, y los focos quedan sólidos. Los hexágonos más oscuros están en la plaza, al costado oriental del parque y sobre el eje que baja hacia el sur. La mitad de todos los puestos cabe en 22 hexágonos, es decir, en **1 ha + 2860 m²**. Este es el mapa que sirve para priorizar dónde intervenir.
 
 ## Qué fallaba en la versión 1
 
@@ -38,6 +56,8 @@ El modelo estaba bien entrenado. En las fotos de dron encuentra el 97 % de las s
 - Frente a eso, el modelo no reconocía las sombrillas. En cambio, marcaba objetos que a esa escala medían lo que una sombrilla en entrenamiento: tapas de alcantarilla, mercancía, cabezas. Por eso el diámetro mediano daba 0,55 m.
 
 <p align="center"><img src="docs/img/escala.png" width="820" alt="Tres recortes de 400 píxeles: en el entrenamiento de v1 la sombrilla mide 19 píxeles, en la ortofoto de v1 mide 85, y en v2 mide 56 tanto en entrenamiento como en la ortofoto"></p>
+
+<p align="center"><sub>Cada recuadro es lo que el modelo recibe en 400 píxeles. En v1 el modelo aprendió con 43 m de terreno por recuadro (sombrilla de 19 px), pero en la ortofoto recibía solo 9 m (sombrilla de 85 px): no la reconocía. En v2 entrenamiento y ortofoto usan la misma escala, 14 m por recuadro y sombrilla de 56 px.</sub></p>
 
 La corrección es una sola regla: **la ventana que se lee de la ortofoto tiene que medir `imgsz × GSD del modelo / GSD de la ortofoto`**. Para el modelo v1 (1504 px de entrada) eso da 4.636 píxeles. v2 se entrenó sin reducir las fotos, así que la ventana es simplemente de 1.024 píxeles. [`escala.py`](src/urbanvendor/escala.py) la calcula a partir de la altura y la cámara que el dron guarda en cada foto, para que no dependa de recordar cuánto se redujo cada imagen.
 
