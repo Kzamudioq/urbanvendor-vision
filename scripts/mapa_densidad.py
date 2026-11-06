@@ -48,6 +48,23 @@ def flecha_norte(ax, x: float, y: float, alto: float):
     ax.text(x, y + alto * 1.08, "N", ha="center", va="bottom", fontsize=10, color=TINTA, zorder=6)
 
 
+def leyenda(ax, fig, cmap, norm):
+    """Barra de color horizontal dentro del mapa, abajo a la derecha, sobre una caja blanca."""
+    from matplotlib.patches import FancyBboxPatch
+
+    x0, y0, w, h = 0.60, 0.045, 0.34, 0.022
+    ax.add_patch(FancyBboxPatch((x0 - 0.02, y0 - 0.032), w + 0.04, 0.105, transform=ax.transAxes,
+                                boxstyle="round,pad=0,rounding_size=0.008", facecolor="white", alpha=0.9,
+                                edgecolor="none", zorder=5))
+    ax.text(x0, y0 + h + 0.018, "Puestos por hexágono de 585 m²", transform=ax.transAxes, fontsize=8.5,
+            fontweight="bold", color=TINTA, zorder=6)
+    cax = ax.inset_axes([x0, y0, w, h], zorder=6)
+    cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax, orientation="horizontal")
+    cb.outline.set_visible(False)
+    cb.ax.tick_params(labelsize=7.5, colors=TINTA, length=2)
+    cb.set_ticks([1, 5, 10, 15, 20, 25][: 1 + sum(v <= norm.vmax for v in (5, 10, 15, 20, 25))])
+
+
 def grilla(ax, xmin, ymin, xmax, ymax, paso: float):
     """Grilla de coordenadas planas (m) con rótulos en el borde, al estilo de una plancha."""
     fmt = mticker.FuncFormatter(lambda v, _: f"{v:,.0f}".replace(",", "."))
@@ -55,7 +72,7 @@ def grilla(ax, xmin, ymin, xmax, ymax, paso: float):
     ax.yaxis.set_major_locator(mticker.MultipleLocator(paso))
     ax.xaxis.set_major_formatter(fmt)
     ax.yaxis.set_major_formatter(fmt)
-    ax.grid(True, color="#ffffff", linewidth=0.7, alpha=0.8, zorder=4)
+    ax.grid(True, color="#5f5e5a", linewidth=0.45, alpha=0.6, linestyle=(0, (4, 3)), zorder=4)
     ax.set_xlabel("")
     ax.set_ylabel("")
     ax.tick_params(labelsize=6.5, colors="#52514e", length=3, direction="out", top=True, right=True,
@@ -93,7 +110,8 @@ def main():
 
     m = a.margen
     xmin, ymin, xmax, ymax = b.left - m, b.bottom - m, b.right + m, b.top + m
-    fig, ax = plt.subplots(figsize=(8.2, 9.4))
+    ancho_fig = 10.0  # el mapa ocupa todo el ancho: la leyenda va dentro
+    fig, ax = plt.subplots(figsize=(ancho_fig, ancho_fig * (ymax - ymin) / (xmax - xmin)))
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
     if not a.sin_mapa_base:
@@ -119,8 +137,7 @@ def main():
     colores = cmap(t)
     colores[:, 3] = 0.30 + 0.55 * np.sqrt(t)
     hx.plot(ax=ax, color=colores, edgecolor="none", linewidth=0, zorder=2)
-    fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, shrink=0.45, pad=0.02,
-                 label="puestos por hexágono de 585 m²")
+    leyenda(ax, fig, cmap, norm)
 
     ancho, alto = xmax - xmin, ymax - ymin
     largo = 100 if ancho > 300 else 50
