@@ -8,3 +8,4 @@ runs/
 datos/
 *.tif
 *.ecw
+!docs/base/*.tif
