@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install geopandas matplotlib rasterio
+      - run: pip install geopandas matplotlib rasterio contextily
       - run: python scripts/mapa_densidad.py --densidad resultados/densidad_la_mariposa_v2.geojson --fondo docs/base/la_mariposa_35cm.tif --salida docs/img/densidad.png
       - name: Publicar
         run: |
