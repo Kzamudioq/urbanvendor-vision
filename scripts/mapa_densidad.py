@@ -1,4 +1,4 @@
-"""Mapa de densidad de puestos sobre el ortomosaico, con escala gráfica y norte.
+"""Mapa de densidad: mapa de calles + ortomosaico + hexágonos, con grilla de coordenadas, escala y norte.
 
 El fondo es una copia liviana del ortomosaico (docs/base/la_mariposa_35cm.tif, 35 cm/píxel):
 el original de 3,45 cm pesa 1 GB y no cabe en el repositorio.
@@ -14,8 +14,9 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import rasterio
+import matplotlib.ticker as mticker
 from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.patches import FancyArrow, Rectangle
+from matplotlib.patches import Polygon as Poly, Rectangle
 
 TINTA = "#1d1d1b"
 NARANJA = ["#fde3d3", "#f6a173", "#eb6834", "#b8401a", "#6e2208"]
@@ -35,10 +36,36 @@ def escala_grafica(ax, largo_m: float, x0: float, y0: float, alto_m: float, tram
         ax.text(x0 + i * paso, y0 + alto_m * 1.5, rot, ha="center", va="bottom", fontsize=8, color=TINTA, zorder=6)
 
 
-def flecha_norte(ax, x: float, y: float, largo: float):
-    ax.add_patch(FancyArrow(x, y, 0, largo, width=largo * 0.12, head_width=largo * 0.42,
-                            head_length=largo * 0.45, length_includes_head=True, color=TINTA, zorder=6))
-    ax.text(x, y + largo * 1.12, "N", ha="center", va="bottom", fontsize=11, fontweight="bold", color=TINTA, zorder=6)
+def flecha_norte(ax, x: float, y: float, alto: float):
+    """Norte de cartografía clásica: punta partida en dos tonos y una N fina encima."""
+    w = alto * 0.36
+    ax.add_patch(Rectangle((x - w * 1.1, y - alto * 0.18), w * 2.2, alto * 1.75, facecolor="white", alpha=0.85,
+                           edgecolor="none", zorder=5))
+    ax.add_patch(Poly([(x, y + alto), (x - w / 2, y), (x, y + alto * 0.28)], closed=True, facecolor=TINTA,
+                      edgecolor=TINTA, linewidth=0.8, zorder=6))
+    ax.add_patch(Poly([(x, y + alto), (x + w / 2, y), (x, y + alto * 0.28)], closed=True, facecolor="white",
+                      edgecolor=TINTA, linewidth=0.8, zorder=6))
+    ax.text(x, y + alto * 1.08, "N", ha="center", va="bottom", fontsize=10, color=TINTA, zorder=6)
+
+
+def grilla(ax, xmin, ymin, xmax, ymax, paso: float):
+    """Grilla de coordenadas planas (m) con rótulos en el borde, al estilo de una plancha."""
+    fmt = mticker.FuncFormatter(lambda v, _: f"{v:,.0f}".replace(",", "."))
+    ax.xaxis.set_major_locator(mticker.MultipleLocator(paso))
+    ax.yaxis.set_major_locator(mticker.MultipleLocator(paso))
+    ax.xaxis.set_major_formatter(fmt)
+    ax.yaxis.set_major_formatter(fmt)
+    ax.grid(True, color="#ffffff", linewidth=0.7, alpha=0.8, zorder=4)
+    ax.set_xlabel("")
+    ax.set_ylabel("")
+    ax.tick_params(labelsize=6.5, colors="#52514e", length=3, direction="out", top=True, right=True,
+                   labeltop=True, labelright=False)
+    plt.setp(ax.get_yticklabels(), rotation=90, va="center")
+    for sp in ax.spines.values():
+        sp.set_color("#52514e")
+        sp.set_linewidth(0.8)
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
 
 
 def main():
@@ -46,7 +73,10 @@ def main():
     ap.add_argument("--densidad", required=True)
     ap.add_argument("--fondo", default="docs/base/la_mariposa_35cm.tif")
     ap.add_argument("--salida", default="docs/img/densidad.png")
-    ap.add_argument("--color-fondo", type=float, default=0.55, help="0 = gris, 1 = color original")
+    ap.add_argument("--color-fondo", type=float, default=0.75, help="0 = gris, 1 = color original")
+    ap.add_argument("--sin-mapa-base", action="store_true", help="para pruebas sin internet")
+    ap.add_argument("--margen", type=float, default=90.0, help="m de mapa de calles alrededor del ortomosaico")
+    ap.add_argument("--paso-grilla", type=float, default=100.0)
     a = ap.parse_args()
 
     with rasterio.open(a.fondo) as src:
@@ -61,7 +91,25 @@ def main():
     hx = gpd.read_file(a.densidad).to_crs(crs)
     hx = hx[hx["puestos"] > 0]
 
-    fig, ax = plt.subplots(figsize=(7.8, 9.0))
+    m = a.margen
+    xmin, ymin, xmax, ymax = b.left - m, b.bottom - m, b.right + m, b.top + m
+    fig, ax = plt.subplots(figsize=(8.2, 9.4))
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
+    if not a.sin_mapa_base:
+        import contextily as cx
+
+        cx.add_basemap(ax, crs=crs, source=cx.providers.Esri.WorldStreetMap, zoom=18, attribution=False,
+                       zorder=0, reset_extent=True)
+        for im in ax.get_images():  # mapa de calles en grises claros: es contexto, no protagonista
+            arr = np.asarray(im.get_array()).astype(float)
+            if arr.ndim == 3 and arr.shape[2] >= 3:
+                if arr.max() <= 1:
+                    arr = arr * 255
+                rgbm = arr[..., :3]
+                g = rgbm.mean(-1, keepdims=True)
+                rgbm = 255 - (255 - (0.2 * rgbm + 0.8 * g)) * 0.7
+                im.set_data(rgbm.clip(0, 255).astype(np.uint8))
     ax.imshow(rgba, extent=(b.left, b.right, b.bottom, b.top), zorder=1, interpolation="lanczos")
 
     # Opacidad creciente con la densidad: lo poco denso deja ver el terreno, los focos quedan sólidos
@@ -74,18 +122,16 @@ def main():
     fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, shrink=0.45, pad=0.02,
                  label="puestos por hexágono de 585 m²")
 
-    ancho = b.right - b.left
+    ancho, alto = xmax - xmin, ymax - ymin
     largo = 100 if ancho > 300 else 50
-    escala_grafica(ax, largo, b.left + 0.05 * ancho, b.bottom + 0.035 * (b.top - b.bottom), alto_m=ancho * 0.012)
-    flecha_norte(ax, b.right - 0.07 * ancho, b.top - 0.11 * (b.top - b.bottom), largo=ancho * 0.06)
-
-    ax.set_xlim(b.left, b.right)
-    ax.set_ylim(b.bottom, b.top)
-    ax.set_axis_off()
-    ax.set_title("Dónde se concentran los puestos · La Mariposa, Bogotá", loc="left", fontsize=13,
+    escala_grafica(ax, largo, xmin + 0.05 * ancho, ymin + 0.035 * alto, alto_m=ancho * 0.010)
+    flecha_norte(ax, xmax - 0.07 * ancho, ymax - 0.12 * alto, alto=ancho * 0.055)
+    grilla(ax, xmin, ymin, xmax, ymax, a.paso_grilla)
+    ax.set_title("Dónde se concentran los puestos · La Mariposa, Bogotá", loc="left", fontsize=13, pad=22,
                  fontweight="bold", color=TINTA)
-    ax.text(0.0, -0.012, "Ortomosaico: vuelo DJI Mavic Air 2, 2 de diciembre de 2021 · MAGNA-SIRGAS Bogotá (EPSG:3116)"
-            " · Puestos: UrbanVendor-Vision v2", transform=ax.transAxes, fontsize=7, color="#52514e", va="top")
+    ax.text(0.0, -0.045, "Ortomosaico: DJI Mavic Air 2, 2 dic. 2021 · Mapa base: Esri, HERE, Garmin, © OpenStreetMap"
+            " contributors · Coordenadas MAGNA-SIRGAS Bogotá (EPSG:3116), grilla cada "
+            f"{a.paso_grilla:.0f} m", transform=ax.transAxes, fontsize=6.5, color="#52514e", va="top")
     fig.savefig(a.salida, dpi=150, bbox_inches="tight", facecolor="white")
 
 
