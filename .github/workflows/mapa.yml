@@ -1,0 +1,29 @@
+name: mapa de densidad
+# Dibuja docs/img/densidad.png con mapa base cada vez que cambian los resultados.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "resultados/densidad_*.geojson"
+      - "scripts/mapa_densidad.py"
+permissions:
+  contents: write
+jobs:
+  mapa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install geopandas matplotlib contextily
+      - run: python scripts/mapa_densidad.py --densidad resultados/densidad_la_mariposa_v2.geojson --salida docs/img/densidad.png
+      - name: Publicar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/img/densidad.png
+          git diff --cached --quiet && exit 0
+          git commit -m "Mapa de densidad con mapa base"
+          for i in 1 2 3; do git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 15; done
+          exit 1

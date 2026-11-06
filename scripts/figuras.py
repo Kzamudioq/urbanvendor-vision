@@ -96,7 +96,7 @@ def mapa_densidad(src, hexes, salida, red=14):
     ax.imshow(base.clip(0, 255).astype(np.uint8), extent=(b.left, b.right, b.bottom, b.top))
     cmap = LinearSegmentedColormap.from_list("naranja", ["#fde3d3", "#f6a173", NARANJA, "#b8401a", "#6e2208"])
     hx = hexes[hexes["puestos"] > 0]
-    hx.plot(ax=ax, column="puestos", cmap=cmap, alpha=0.85, edgecolor="white", linewidth=0.4,
+    hx.plot(ax=ax, column="puestos", cmap=cmap, alpha=0.85, edgecolor="none", linewidth=0,
             legend=True, legend_kwds={"label": "puestos por hexágono de 585 m²", "shrink": 0.55})
     ax.set_axis_off()
     ax.set_title("Dónde se concentran los puestos · La Mariposa", loc="left", fontsize=13,
