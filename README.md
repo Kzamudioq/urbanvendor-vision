@@ -20,7 +20,7 @@ Caso de estudio: sector de **La Mariposa**, centro de Bogotá. Vuelo con DJI Mav
 - La mitad de los puestos ocupa **32 hexágonos**, que suman **1 ha + 8706 m²**. En el más denso hay **27 puestos** en 585 m².
 - La capa está en [`resultados/puestos_la_mariposa_v2.geojson`](resultados/puestos_la_mariposa_v2.geojson) (EPSG:3116). Cada polígono trae su confianza, área y diámetro. La densidad por hexágono está en [`resultados/densidad_la_mariposa_v2.geojson`](resultados/densidad_la_mariposa_v2.geojson).
 
-<p align="center"><img src="docs/img/densidad.png" width="560" alt="Mapa de hexágonos sobre la ortofoto: la mayor densidad está alrededor de la plaza y en las calles que salen de ella"></p>
+<p align="center"><img src="docs/img/densidad.png" width="560" alt="Mapa de hexágonos sobre el ortomosaico, con escala y norte: la mayor densidad está alrededor del Parque La Mariposa y en las calles que salen de él"></p>
 
 ## Qué fallaba en la versión 1
 
@@ -84,7 +84,9 @@ src/urbanvendor/
   datos.py      Labelme -> YOLO-seg en teselas nativas, zonas por distancia, pliegues
   evaluar.py    emparejamiento IoU, precisión/recall, control de fugas por distancia
 notebooks/entrenar_v2_colab.ipynb   re-entrenamiento con validación cruzada por zona (T4)
-scripts/figuras.py                  figuras de este README desde la ortofoto y los GeoJSON
+scripts/figuras.py                  antes/después y escala, desde la ortofoto y los GeoJSON
+scripts/mapa_densidad.py            mapa de densidad sobre el ortomosaico (lo regenera GitHub Actions)
+docs/base/la_mariposa_35cm.tif      copia liviana del ortomosaico (35 cm/píxel) para el mapa
 tests/                              11 pruebas sobre una ortofoto sintética y casos de borde
 ```
 
