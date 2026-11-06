@@ -46,7 +46,7 @@ def fuente(n):
 def antes_despues(src, v1, v2, c, f, lado, salida):
     paneles = []
     for gdf, color, titulo in ((v1, (255, 214, 0), "v1 · objetos de 0,55 m"),
-                               (v2, (255, 59, 48), "v2 · sombrillas de 2,0 m")):
+                               (v2, (255, 59, 48), "v2 · sombrillas de 2,2 m")):
         im = Image.fromarray(leer(src, c, f, lado, lado))
         d = ImageDraw.Draw(im)
         x0, y0 = src.transform * (c, f)
@@ -67,7 +67,8 @@ def escala(src, v2, salida, gsd_raster, gsd_modelo, lienzo=400):
     """Mismo lienzo de 400 píxeles de entrada al modelo: cuánto terreno cabe y qué tamaño tiene una sombrilla."""
     g = v2.sort_values("confianza", ascending=False).iloc[5].geometry
     cx, cy = (~src.transform) * (g.centroid.x, g.centroid.y)
-    casos = [("entrenamiento", gsd_modelo), ("ortofoto en v1", gsd_raster * 1024 / 1504), ("ortofoto en v2", gsd_modelo)]
+    casos = [("v1 · entrenamiento", gsd_modelo), ("v1 · ortofoto", gsd_raster * 1024 / 1504),
+             ("v2 · entrenamiento y ortofoto", 0.0356)]
     fig, ax = plt.subplots(1, 3, figsize=(10.5, 4.2), gridspec_kw={"wspace": 0.06})
     for a, (t, gsd) in zip(ax, casos):
         n = int(round(lienzo * gsd / gsd_raster))  # píxeles nativos que caben en el lienzo
@@ -78,7 +79,7 @@ def escala(src, v2, salida, gsd_raster, gsd_modelo, lienzo=400):
             sp.set_color("#d6d4cc")
         a.set_title(f"{t}\n{lienzo * gsd:.0f} m de lado · sombrilla ≈ {2.0 / gsd:.0f} px", fontsize=10.5,
                     color=TINTA, loc="left")
-    fig.suptitle("Lo que cabe en 400 píxeles de entrada del modelo", x=0.125, ha="left",
+    fig.suptitle("Lo que cabe en 400 píxeles de entrada del modelo: en v2 entrenamiento y ortofoto coinciden", x=0.125, ha="left",
                  fontsize=13, fontweight="bold", color=TINTA, y=1.05)
     fig.savefig(salida, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
