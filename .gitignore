@@ -9,3 +9,4 @@ datos/
 *.tif
 *.ecw
 !docs/base/*.tif
+trabajo_v2/
