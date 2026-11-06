@@ -1,4 +1,4 @@
-"""Mapa de densidad sobre un mapa base de OpenStreetMap llevado a grises.
+"""Mapa de densidad sobre el mapa de calles de Esri llevado a grises.
 
 Solo necesita el GeoJSON de hexágonos: lo genera GitHub Actions (`.github/workflows/mapa.yml`),
 que sí tiene acceso a las teselas del mapa base.
@@ -38,8 +38,10 @@ def main():
     hx.plot(ax=ax, column="puestos", cmap=cmap, alpha=0.82, edgecolor="none", linewidth=0, zorder=2,
             legend=True, legend_kwds={"label": "puestos por hexágono de 585 m²", "shrink": 0.5})
     img, ext = cx.bounds2img(xmin - m, ymin - m, xmax + m, ymax + m, zoom=18,
-                             source=cx.providers.OpenStreetMap.Mapnik)
+                             source=cx.providers.Esri.WorldStreetMap)
     rgb = img[..., :3].astype(float)
+    if rgb.std() < 8 or (rgb.mean(-1) > 245).mean() > 0.97:
+        raise SystemExit("El servidor del mapa base devolvió teselas vacías o de error: no se publica la figura.")
     gris = rgb.mean(-1, keepdims=True)
     base = 0.15 * rgb + 0.85 * gris            # casi sin color: el color es de los datos
     base = 255 - (255 - base) * 0.75           # más claro
@@ -49,7 +51,7 @@ def main():
     ax.set_axis_off()
     ax.set_title("Dónde se concentran los puestos · La Mariposa, Bogotá", loc="left", fontsize=13,
                  fontweight="bold", color=TINTA)
-    fig.text(0.02, 0.02, "Mapa base © OpenStreetMap contributors · Puestos: UrbanVendor-Vision v2",
+    fig.text(0.02, 0.02, "Mapa base: Esri, HERE, Garmin, © OpenStreetMap contributors · Puestos: UrbanVendor-Vision v2",
              fontsize=7.5, color="#52514e")
     fig.savefig(a.salida, dpi=150, bbox_inches="tight", facecolor="white")
 
