@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "urbanvendor"
+version = "2.0.0"
+description = "Mapeo de puestos de venta informal con sombrilla en fotos de dron y ortofotos (YOLO26-seg)"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Karen Tatiana Zamudio Quintero", email = "Kzamudioquintero@gmail.com" }]
+dependencies = ["numpy", "pillow", "rasterio", "shapely>=2", "geopandas", "pandas"]
+
+[project.optional-dependencies]
+modelo = ["ultralytics>=8.4"]
+test = ["pytest", "scipy"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

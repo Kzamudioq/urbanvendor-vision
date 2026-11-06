@@ -1,0 +1,13 @@
+Copyright (c) 2026 Karen Tatiana Zamudio Quintero. All rights reserved.
+
+This repository is published for portfolio and evaluation purposes. You may
+view and read the code and documentation. No permission is granted to copy,
+modify, distribute, sublicense or use this code, figures or results, in whole
+or in part, for commercial or non-commercial purposes, without prior written
+permission from the author. Trained model weights are not distributed.
+
+Third-party components keep their own licences: the UrbanVendor-Vision
+annotations published on Roboflow Universe (CC BY 4.0) and Ultralytics YOLO
+(AGPL-3.0), which is an optional dependency and is not included here.
+
+Contact: Kzamudioquintero@gmail.com
