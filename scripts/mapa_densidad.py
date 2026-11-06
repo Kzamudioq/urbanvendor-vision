@@ -51,8 +51,9 @@ def main():
     ax.set_axis_off()
     ax.set_title("Dónde se concentran los puestos · La Mariposa, Bogotá", loc="left", fontsize=13,
                  fontweight="bold", color=TINTA)
-    fig.text(0.02, 0.02, "Mapa base: Esri, HERE, Garmin, © OpenStreetMap contributors · Puestos: UrbanVendor-Vision v2",
-             fontsize=7.5, color="#52514e")
+    ax.text(0.01, 0.006, "Mapa base: Esri, HERE, Garmin, © OpenStreetMap contributors · Puestos: UrbanVendor-Vision v2",
+            transform=ax.transAxes, fontsize=6.5, color="#52514e", zorder=4,
+            bbox=dict(facecolor="white", alpha=0.8, edgecolor="none", pad=2))
     fig.savefig(a.salida, dpi=150, bbox_inches="tight", facecolor="white")
 
 
