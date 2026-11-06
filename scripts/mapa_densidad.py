@@ -1,4 +1,4 @@
-"""Mapa de densidad sobre un mapa base (CARTO Positron, datos de OpenStreetMap).
+"""Mapa de densidad sobre un mapa base de OpenStreetMap llevado a grises.
 
 Solo necesita el GeoJSON de hexágonos: lo genera GitHub Actions (`.github/workflows/mapa.yml`),
 que sí tiene acceso a las teselas del mapa base.
@@ -12,6 +12,7 @@ import argparse
 import contextily as cx
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 
 TINTA = "#1d1d1b"
@@ -36,12 +37,19 @@ def main():
     cmap = LinearSegmentedColormap.from_list("naranja", NARANJA)
     hx.plot(ax=ax, column="puestos", cmap=cmap, alpha=0.82, edgecolor="none", linewidth=0, zorder=2,
             legend=True, legend_kwds={"label": "puestos por hexágono de 585 m²", "shrink": 0.5})
-    cx.add_basemap(ax, source=cx.providers.CartoDB.Positron, zoom=18, attribution=False, zorder=1)
-    cx.add_basemap(ax, source=cx.providers.CartoDB.PositronOnlyLabels, zoom=18, attribution=False, zorder=3)
+    img, ext = cx.bounds2img(xmin - m, ymin - m, xmax + m, ymax + m, zoom=18,
+                             source=cx.providers.OpenStreetMap.Mapnik)
+    rgb = img[..., :3].astype(float)
+    gris = rgb.mean(-1, keepdims=True)
+    base = 0.15 * rgb + 0.85 * gris            # casi sin color: el color es de los datos
+    base = 255 - (255 - base) * 0.75           # más claro
+    ax.imshow(base.clip(0, 255).astype(np.uint8), extent=ext, zorder=1, interpolation="lanczos")
+    ax.set_xlim(xmin - m, xmax + m)
+    ax.set_ylim(ymin - m, ymax + m)
     ax.set_axis_off()
     ax.set_title("Dónde se concentran los puestos · La Mariposa, Bogotá", loc="left", fontsize=13,
                  fontweight="bold", color=TINTA)
-    fig.text(0.02, 0.02, "Mapa base © OpenStreetMap contributors © CARTO · Puestos: UrbanVendor-Vision v2",
+    fig.text(0.02, 0.02, "Mapa base © OpenStreetMap contributors · Puestos: UrbanVendor-Vision v2",
              fontsize=7.5, color="#52514e")
     fig.savefig(a.salida, dpi=150, bbox_inches="tight", facecolor="white")
 
