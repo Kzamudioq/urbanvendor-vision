@@ -23,6 +23,10 @@ Caso de estudio: sector de **La Mariposa**, centro de Bogotá. Vuelo con DJI Mav
 - La capa está en [`resultados/puestos_la_mariposa_v2.geojson`](resultados/puestos_la_mariposa_v2.geojson) (EPSG:3116). Cada polígono trae su confianza, área y diámetro. La densidad por hexágono está en [`resultados/densidad_la_mariposa_v2.geojson`](resultados/densidad_la_mariposa_v2.geojson).
 - Un punto por puesto, con coordenadas planas, latitud y longitud y un enlace a Google Maps: [`resultados/centroides_la_mariposa_v2.csv`](resultados/centroides_la_mariposa_v2.csv). Se abre en Excel o como capa de puntos en QGIS.
 
+<p align="center"><img src="docs/img/segmentacion.png" width="560" alt="Máscaras de segmentación de las 710 sombrillas sobre el ortomosaico, con un recuadro de detalle de 60 × 60 m junto al Parque La Mariposa"></p>
+
+<p align="center"><img src="docs/img/puestos.png" width="560" alt="Mapa de puntos sobre el ortomosaico, con escala y norte: cada puesto es un círculo naranja cuyo tamaño depende del diámetro de la sombrilla"></p>
+
 <p align="center"><img src="docs/img/densidad.png" width="560" alt="Mapa de hexágonos sobre el ortomosaico, con escala y norte: la mayor densidad está alrededor del Parque La Mariposa y en las calles que salen de él"></p>
 
 ## Qué fallaba en la versión 1
