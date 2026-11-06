@@ -61,3 +61,25 @@ def resumen(puestos, hexes) -> dict:
         "max_por_hexagono": int(orden[0]) if len(orden) else 0,
         "hexagonos_con_la_mitad": k,
     }
+
+
+def centroides(puestos):
+    """Un punto por puesto: centroide de la máscara, en el CRS original y en WGS84 (lat/lon).
+
+    El centroide de la máscara es el centro de la sombrilla vista desde arriba. Su posición
+    relativa es de pocos centímetros; la absoluta depende de la georreferenciación de la
+    ortofoto (con o sin puntos de control), que este cálculo no corrige.
+    """
+    import geopandas as gpd
+
+    c = puestos.geometry.centroid
+    epsg = puestos.crs.to_epsg() if puestos.crs else None
+    wgs = gpd.GeoSeries(c, crs=puestos.crs).to_crs(4326)
+    out = gpd.GeoDataFrame({
+        "id": puestos["id"] if "id" in puestos else range(1, len(puestos) + 1),
+        f"este_{epsg}": c.x.round(2), f"norte_{epsg}": c.y.round(2),
+        "lat": wgs.y.round(7), "lon": wgs.x.round(7),
+        "diametro_m": puestos.get("diametro_m"), "confianza": puestos.get("confianza"),
+    }, geometry=wgs, crs=4326)
+    out["google_maps"] = [f"https://maps.google.com/?q={la},{lo}" for la, lo in zip(out["lat"], out["lon"])]
+    return out

@@ -138,3 +138,15 @@ def test_densidad_hexagonal(tmp_path):
     assert hx["puestos"].sum() == 11
     r = densidad.resumen(gdf, hx)
     assert r["max_por_hexagono"] >= 5 and r["hexagonos_con_la_mitad"] <= 2
+
+
+def test_centroides_en_wgs84():
+    import geopandas as gpd
+    from shapely.geometry import Point
+
+    g = gpd.GeoDataFrame({"id": [1], "diametro_m": [2.0], "confianza": [0.9]},
+                         geometry=[Point(1_000_000, 1_000_000).buffer(1)], crs="EPSG:3116")
+    c = densidad.centroides(g)
+    # el origen de MAGNA-SIRGAS Bogotá está en 4,5962 N, -74,0775 W
+    assert c.loc[0, "lat"] == pytest.approx(4.5962, abs=1e-3) and c.loc[0, "lon"] == pytest.approx(-74.0775, abs=1e-3)
+    assert c.loc[0, "este_3116"] == pytest.approx(1_000_000, abs=0.01)

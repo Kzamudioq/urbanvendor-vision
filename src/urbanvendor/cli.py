@@ -4,6 +4,7 @@
   dataset    Labelme -> dataset YOLO-seg en teselas nativas, con pliegues por zona
   ortofoto   detectar puestos en una ortofoto completa -> GeoJSON
   densidad   conteo por hexágono -> GeoJSON + resumen
+  centroides un punto por puesto con coordenadas planas y geográficas -> CSV + GeoJSON
   evaluar    precisión / recall foto por foto contra Labelme, con control de fugas
 """
 from __future__ import annotations
@@ -45,6 +46,10 @@ def main(argv=None):
     h.add_argument("--puestos", required=True)
     h.add_argument("--lado", type=float, default=15.0, help="lado del hexágono en metros")
     h.add_argument("--salida", default="densidad.geojson")
+
+    c = sub.add_parser("centroides")
+    c.add_argument("--puestos", required=True)
+    c.add_argument("--salida", default="centroides", help="prefijo: genera <salida>.csv y <salida>.geojson")
 
     v = sub.add_parser("evaluar")
     v.add_argument("--fotos", required=True)
@@ -99,6 +104,16 @@ def main(argv=None):
         hx = conteo_por_hexagono(p, a.lado)
         hx[hx["puestos"] > 0].to_file(a.salida, driver="GeoJSON")
         print(json.dumps(resumen(p, hx), ensure_ascii=False, indent=1))
+
+    elif a.cmd == "centroides":
+        import geopandas as gpd
+
+        from .densidad import centroides
+
+        pts = centroides(gpd.read_file(a.puestos))
+        pts.drop(columns="geometry").to_csv(f"{a.salida}.csv", index=False)
+        pts.to_file(f"{a.salida}.geojson", driver="GeoJSON")
+        print(f"{len(pts)} puestos -> {a.salida}.csv / {a.salida}.geojson", file=sys.stderr)
 
     elif a.cmd == "evaluar":
         import numpy as np
